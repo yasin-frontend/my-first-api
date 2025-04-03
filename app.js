@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2')
 const app = express();
 require('dotenv').config();
+const cors = require('cors')
 
 const con = mysql.createConnection({
     host: process.env.HOST,
@@ -37,14 +38,11 @@ const authApiKey = async (req, res, next) => {
     next();
 }
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-    next();
-});
+app.use(cors({
+    origin: '*', // или указать конкретный домен, например: 'http://127.0.0.1:5500'
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+}));
 
 con.connect((err) => {
     if (err) throw new Error(err);
