@@ -1,8 +1,15 @@
 const express = require('express');
-const mysql = require('mysql2')
+const mysql = require('mysql2');
 const app = express();
 require('dotenv').config();
-const cors = require('cors')
+const cors = require('cors');
+
+// Настройка CORS
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+}));
 
 const con = mysql.createConnection({
     host: process.env.HOST,
@@ -13,17 +20,7 @@ const con = mysql.createConnection({
     ssl: { rejectUnauthorized: false }
 });
 
-const users = [
-    ['Yasin', 'Duo Daggers', 16],
-    ['John', 'Sword', 18],
-    ['Doe', 'Arrow', 19],
-    ['Jimmy', 'Greatsword', 22],
-    ['Arnold', 'Spear', 16],
-    ['Nolan', 'Knife', 14]
-]
-
 const API_KEY = process.env.API_KEY;
-
 const authApiKey = async (req, res, next) => {
     const apiKey = req.headers['x-api-key'];
 
@@ -36,32 +33,31 @@ const authApiKey = async (req, res, next) => {
     }
 
     next();
-}
-
-app.use(cors({
-    origin: '*', // или указать конкретный домен, например: 'http://127.0.0.1:5500'
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
-}));
+};
 
 con.connect((err) => {
-    if (err) throw new Error(err);
-    con.query('SELECT * FROM users', (err, result) => {
-        app.get('/api', authApiKey, (req, res) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json(result);
-        });
-    });
-})
+    if (err) {
+        console.error('Error connecting to the database: ', err);
+        process.exit(1);
+    }
+});
 
+app.get('/api', authApiKey, (req, res) => {
+    con.query('SELECT * FROM users', (err, result) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(result);
+    });
+});
+
+// Главная страница
 app.get('/', (req, res) => {
     res.send(`
         <div style="width: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 20px; padding: 0; margin: 0;">
             <p style="font-size:35px; font-family: sans-serif; padding: 0; margin: 0">You can use my API here: https://my-first-api-two.vercel.app/api</p>
-            <p style="font-size:35px; font-family: sans-serif; padding: 0; margin: 0">But I won't say the API key</p>
         </div>
     `);
 });
 
+// Запуск сервера
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
