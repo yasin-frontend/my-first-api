@@ -1,14 +1,24 @@
 const express = require('express');
+const mysql = require('mysql2')
 const app = express();
 require('dotenv').config();
 
+const con = mysql.createConnection({
+    host: process.env.HOST,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE,
+    port: process.env.SQL_PORT,
+    ssl: { rejectUnauthorized: false }
+});
+
 const users = [
-    { user_id: 1, name: 'Yasin', favorite_product: 'Duo Daggers', age: 16 },
-    { user_id: 2, name: 'John', favorite_product: 'Sword', age: 18 },
-    { user_id: 3, name: 'Doe', favorite_product: 'Arrow', age: 19 },
-    { user_id: 4, name: 'Jimmy', favorite_product: 'Greatsword', age: 22 },
-    { user_id: 5, name: 'Arnold', favorite_product: 'Spear', age: 16 },
-    { user_id: 6, name: 'Nolan', favorite_product: 'Knife', age: 14 },
+    ['Yasin', 'Duo Daggers', 16],
+    ['John', 'Sword', 18],
+    ['Doe', 'Arrow', 19],
+    ['Jimmy', 'Greatsword', 22],
+    ['Arnold', 'Spear', 16],
+    ['Nolan', 'Knife', 14]
 ]
 
 const API_KEY = process.env.API_KEY;
@@ -36,8 +46,23 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/api', authApiKey, (req, res) => {
-    res.json(users);
+con.connect((err) => {
+    if (err) throw new Error(err);
+    app.get('/api', authApiKey, (req, res) => {
+        con.query('SELECT * FROM users', (err, result) => {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json(result);
+        });
+    });
+})
+
+app.get('/', (req, res) => {
+    res.send(`
+        <div style="width: 100%; height: 100dvh; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 20px; padding: 0; margin: 0;">
+            <p style="font-size:35px; font-family: sans-serif; padding: 0; margin: 0">You can use my API here: https://my-first-api-two.vercel.app/api</p>
+            <p style="font-size:35px; font-family: sans-serif; padding: 0; margin: 0">But I won't say the API key</p>
+        </div>
+    `);
 });
 
 const PORT = process.env.PORT || 5000;
