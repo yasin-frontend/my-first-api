@@ -48,8 +48,8 @@ app.use((req, res, next) => {
 
 con.connect((err) => {
     if (err) throw new Error(err);
-    app.get('/api', authApiKey, (req, res) => {
-        con.query('SELECT * FROM users', (err, result) => {
+    con.query('SELECT * FROM users', (err, result) => {
+        app.get('/api', authApiKey, (req, res) => {
             if (err) return res.status(500).json({ error: 'Database error' });
             res.json(result);
         });
